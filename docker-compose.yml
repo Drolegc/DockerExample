@@ -1,0 +1,54 @@
+mysql:
+  restart: always
+  image: mysql
+  volumes:
+    - javadb:/var/lib/mysql
+  env_file:
+    - .env
+
+
+api:
+  build:
+    ./api/
+  volumes:
+    - ./api/:/usr/local/tomcat/webapps/
+  ports:
+    - "30500:8080"
+
+  links:
+    - mysql
+
+middleware:
+  restart: always
+  build:
+    ./server/
+  ports:
+    - "8080:8088"
+  volumes:
+    - ./server/:/usr/src/app
+  env_file:
+    - .env
+  links:
+    - api
+
+
+vemec:
+  build:
+    ./vemecs/
+  volumes:
+    - ./vemecs/:/usr/src/app
+  links:
+    - middleware
+    
+frontend:
+  restart: always
+  build:
+    ./frontend/
+  environment:
+    - HOST=0.0.0.0
+  command:
+    "npm run start"
+  links:
+    - middleware
+
+
